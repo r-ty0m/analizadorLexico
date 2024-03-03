@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "tabla_simbolos.h": "c",
+        "cstdlib": "c",
+        "analizador_sintactico.h": "c",
+        "analizador_lexico.h": "c",
+        "analizadorsintactico.h": "c",
+        "definiciones.h": "c"
+    }
+}
