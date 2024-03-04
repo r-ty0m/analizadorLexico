@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "tabla_simbolos.h"
 
 
 void analizar() {
@@ -26,7 +27,9 @@ void analizar() {
 
         if (lex->lexema != NULL) {
             free(lex->lexema);
+            lex->lexema=NULL;
         }
+
     }
 
     printf("\nFinalizado análisis");

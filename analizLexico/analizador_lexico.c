@@ -60,7 +60,7 @@ void sig_comp_lexico(comp_lexico *lex) {
                     buffer[buf_len++] = c;
                     buffer[buf_len++] = '\0'; // Aseguramos que el string esté terminado correctamente.
                     lex->lexema = strdup(buffer);
-                    lex->tipo_componente = buscar(lex->lexema);
+                    lex->tipo_componente = PUNTO;
                     estado=0;
                     return; // Salimos de la función.
                 }
@@ -80,7 +80,7 @@ void sig_comp_lexico(comp_lexico *lex) {
 
 
 
-                    lex->tipo_componente = buscar(lex->lexema);
+                    lex->tipo_componente = buscar_ts(lex->lexema);
 
                     // Por ahora, asumimos que es un identificador genérico.
                     //lex->tipo_componente = IDENTIFICADOR;

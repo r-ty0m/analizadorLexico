@@ -23,8 +23,10 @@ int main(int argc, char **argv) {
 
     analizar(); // Comienza el análisis sintáctico sin parámetros
 
-    //imprimir_ts();
-    //free_ts(); // Libera recursos de la tabla de símbolos
+    printf("\n ######################################## \n");
+
+    imprimir_ts();
+    free_ts(); // Libera recursos de la tabla de símbolos
 
     // Suponiendo la existencia de cerrar_archivo() en sistema_entrada
     //cerrar_archivo(); // Cierra el archivo y limpia recursos del sistema de entrada

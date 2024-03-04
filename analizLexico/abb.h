@@ -8,10 +8,10 @@
 
 ///////////////////////////////////////INICIO PARTE MODIFICABLE
 
-typedef int TIPOCLAVE;
+typedef char* TIPOCLAVE;
 
 typedef struct {
-    int lexema;
+    char* lexema; // Cambio principal aquí
     int tipo_componente;
 } TIPOELEMENTOABB;
 

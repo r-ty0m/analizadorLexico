@@ -25,14 +25,20 @@ TIPOCLAVE _clave_elem(TIPOELEMENTOABB *E) {
  * de datos del TAD sin tener que cambiar todas las 
  * comparaciones del resto de la biblioteca y en su lugar
  * cambiando solo esta. */
+
 int _comparar_claves(TIPOCLAVE cl1, TIPOCLAVE cl2) {
-    return cl1==cl2 ? 0 : cl1>cl2 ? 1 : -1;
+    //return cl1==cl2 ? 0 : cl1>cl2 ? 1 : -1;
+    int cmp = strcmp(cl1, cl2);
+    if(cmp>0) return 1;
+    if(cmp<0) return -1;
+    return 0;
 }
 
 /* Si tipoelem tiene alguna estructura que necesite 
  * destruirse ha de hacerse aqui. El uso de esta funcion
  * permite hacer mas eficiente la destruccion del arbol.*/
 void _destruir_elem(TIPOELEMENTOABB *E) {
+    free(E->lexema);
 }
 
 /////////////////////////// FIN PARTE MODIFICABLE

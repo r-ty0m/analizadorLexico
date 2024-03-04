@@ -16,51 +16,45 @@ void init_ts() {
 
     insertar_ts("import", IMPORT); // Suponiendo que IMPORT, AS, etc., son constantes definidas.
     insertar_ts("as", AS);
+    insertar_ts("for", FOR); // Suponiendo que IMPORT, AS, etc., son constantes definidas.
+    insertar_ts("if", IF);
+    insertar_ts("while", WHILE); // Suponiendo que IMPORT, AS, etc., son constantes definidas.
+    insertar_ts("!=", NOTEQUAL);
 }
 
 
 
+// Definición de la función auxiliar para recorrido inorden
+void _imprimirInorden(TABB nodo) {
+    if (nodo == NULL) {
+        return; // Caso base: si el nodo es NULL, no hay nada que imprimir.
+    }
 
+    TIPOELEMENTOABB elemento;
 
+    // Visita el subárbol izquierdo
+    _imprimirInorden(izqAbb(nodo));
+
+    // Procesa el nodo actual
+    leerElementoAbb(nodo, &elemento); // Obtiene la información del nodo actual
+    printf("Lexema: %s, Tipo Componente: %d\n", elemento.lexema, elemento.tipo_componente);
+
+    // Visita el subárbol derecho
+    _imprimirInorden(derAbb(nodo));
+}
+
+// Implementación de imprimir_ts usando la función auxiliar
 void imprimir_ts() {
-    // Esta función debería recorrer el árbol y imprimir los elementos.
-    // La implementación específica dependerá de cómo quieras visualizar el árbol.
-}
-
-
-
-int hash_lexema(char* lexema) {
-    int hash = 0;
-    int length = strlen(lexema);
-
-    // Limita la longitud del lexema para evitar desbordamiento de int.
-    int max_length = 6; // Ajustado para evitar desbordamiento.
-    if (length > max_length) {
-        length = max_length;
-    }
-
-    for (int i = 0; i < length; ++i) {
-        hash = hash * 1000 + (unsigned char)lexema[i]; // Concatena los valores ASCII.
-    }
-
-    return hash;
-}
-
-void revertir_hash_lexema(int hash, char* lexema, int length) {
-    for (int i = length - 1; i >= 0; --i) {
-        lexema[i] = (char)(hash % 1000); // Extrae el último componente de tres cifras.
-        hash /= 1000; // Descarta el último componente de tres cifras.
-    }
-    lexema[length] = '\0'; // Asegura que la cadena esté correctamente terminada.
+    printf("Contenido de la Tabla de Símbolos:\n");
+    _imprimirInorden(tablaSimbolos); // Inicia el recorrido desde la raíz del árbol
 }
 
 
 
 void insertar_ts(char* lexema, int tipo_componente) {
-    int lexema_hash = hash_lexema(lexema); // Convierte el lexema a un entero usando la función hash.
 
     TIPOELEMENTOABB nuevoElemento;
-    nuevoElemento.lexema = lexema_hash; // Usa el valor hash como clave.
+    nuevoElemento.lexema = strdup(lexema); // Duplica el lexema
     nuevoElemento.tipo_componente = tipo_componente;
 
     insertarElementoAbb(&tablaSimbolos, nuevoElemento);
@@ -70,16 +64,23 @@ void insertar_ts(char* lexema, int tipo_componente) {
 
 
 int buscar_ts (char* lexema) {
-    int lexema_hash = hash_lexema(lexema); // Convierte el lexema a un entero usando la función hash.
 
     TIPOELEMENTOABB nodoBuscado;
-    buscarNodoAbb(tablaSimbolos, lexema_hash, &nodoBuscado);
+    nodoBuscado.lexema = NULL; // Asegúrate de inicializar
+    nodoBuscado.tipo_componente; // Asegúrate de inicializar
 
-    if (nodoBuscado.lexema == lexema_hash) {
-        return nodoBuscado.tipo_componente;
-    } else {
-        return -1; // Indica que el lexema no se encontró.
+    buscarNodoAbb(tablaSimbolos, lexema, &nodoBuscado);
+
+    if(nodoBuscado.lexema!=NULL && lexema!=NULL){
+        if (strcmp(nodoBuscado.lexema, lexema) == 0) {
+            return nodoBuscado.tipo_componente;
+        }
+    } else { //Si no se encuentra, se añade
+        //printf("No se encuentra el lexema [%s], añadiendo...", lexema);
+        insertar_ts(lexema, IDENTIFICADOR); // Suponiendo que IMPORT, AS, etc., son constantes definidas.
+        return IDENTIFICADOR; // Indica que el lexema no se encontró.
     }
+    return 0;
 }
 
 
