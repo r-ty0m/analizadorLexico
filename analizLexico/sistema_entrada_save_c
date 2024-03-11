@@ -1,0 +1,67 @@
+//
+// Created by user on 3/8/24.
+//
+#include "sistema_entrada.h"
+#include <stdlib.h>
+
+static FILE *archivo = NULL;
+static char *buffer = NULL;
+static size_t tamano_buffer = 0;
+static size_t posicion_actual = 0;
+static int ultimo_caracter_devuelto = 0; // Añadido para manejar la devolución de caracteres
+
+void abrir_archivo(const char *nombre_archivo) {
+    archivo = fopen(nombre_archivo, "r");
+    if (!archivo) {
+        perror("Error al abrir el archivo");
+        exit(EXIT_FAILURE);
+    }
+
+    fseek(archivo, 0, SEEK_END);
+    tamano_buffer = ftell(archivo);
+    rewind(archivo);
+
+    buffer = (char *)malloc(tamano_buffer * sizeof(char));
+    if (!buffer) {
+        perror("No se pudo reservar memoria para el buffer");
+        cerrar_archivo();
+        exit(EXIT_FAILURE);
+    }
+    fread(buffer, sizeof(char), tamano_buffer, archivo);
+    fclose(archivo);
+    archivo = NULL;
+}
+
+char siguiente_caracter() {
+    if (ultimo_caracter_devuelto) {
+        char c = ultimo_caracter_devuelto;
+        ultimo_caracter_devuelto = 0; // Resetear el carácter devuelto
+        return c;
+    } else if (posicion_actual < tamano_buffer) {
+        return buffer[posicion_actual++];
+    } else {
+        return EOF;
+    }
+}
+
+void cerrar_archivo() {
+    if (buffer) {
+        free(buffer);
+        buffer = NULL;
+    }
+    tamano_buffer = 0;
+    posicion_actual = 0;
+    ultimo_caracter_devuelto = 0; // Resetear al cerrar
+    if (archivo) {
+        fclose(archivo);
+        archivo = NULL;
+    }
+}
+
+void devolver_caracter(char c) {
+    if (posicion_actual > 0 && !ultimo_caracter_devuelto) {
+        // Solo permitir devolver si no estamos en el inicio y no hay un carácter ya devuelto
+        ultimo_caracter_devuelto = c;
+        posicion_actual--; // Decrementar la posición actual para "devolver" el carácter
+    }
+}

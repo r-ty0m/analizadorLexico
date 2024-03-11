@@ -1,9 +1,23 @@
 #ifndef SISTEMA_ENTRADA_H
 #define SISTEMA_ENTRADA_H
 
-void abrir_archivo(char *nombre_archivo);
-char siguiente_caracter();
-void devolver_caracter(char c);
-void cerrar_archivo();
+#define N 8 // Tamaño de cada centinela
 
-#endif
+// Inicializa el sistema de entrada.
+void inicializar_sistema_entrada(const char *nombre_archivo);
+
+// Cierra el sistema de entrada y libera recursos.
+void cerrar_sistema_entrada();
+
+// Devuelve el siguiente carácter del sistema de entrada.
+char siguiente_caracter();
+
+// Devuelve el carácter actual al sistema de entrada.
+void devolver_caracter();
+
+char *devolver_lexema();
+
+// Devuelve el tamaño actual del lexema en proceso.
+int tamano_lexema();
+
+#endif // SISTEMA_ENTRADA_H

@@ -1,0 +1,11 @@
+#ifndef SISTEMA_ENTRADA_H
+#define SISTEMA_ENTRADA_H
+
+#include <stdio.h>
+
+void abrir_archivo(const char *nombre_archivo);
+char siguiente_caracter();
+void cerrar_archivo();
+void devolver_caracter(char c);
+
+#endif // SISTEMA_ENTRADA_H

@@ -2,34 +2,37 @@
 #include <stdlib.h>
 #include "analizador_sintactico.h"
 #include "tabla_simbolos.h"
-#include "sistema_entrada.h" // Incluye el sistema de entrada
-
-// Incluye otros archivos necesarios
+#include "sistema_entrada.h"
 
 int main(int argc, char **argv) {
 
     if (argc != 2) {
-        printf("\n FORMATO INCORRECTO: Usa %s [Código Fuente]\n", argv[0]);
+        printf("\nFORMATO INCORRECTO: Usa %s [Código Fuente]\n", argv[0]);
         exit(EXIT_FAILURE);
     }
 
-    // Suponiendo la existencia de abrir_archivo() en sistema_entrada
-    //abrir_archivo(argv[1]); // Prepara el sistema de entrada para usar el archivo
+    // Inicializa el sistema de entrada y carga el primer bloque del archivo fuente
+    inicializar_sistema_entrada(argv[1]);
 
-    init_ts(); // Inicializa la tabla de símbolos
-    imprimir_ts(); // Imprime la tabla de símbolos
-
-    printf("\n ######################################## \n");
-
-    analizar(); // Comienza el análisis sintáctico sin parámetros
-
-    printf("\n ######################################## \n");
-
+    // Inicializa la tabla de símbolos
+    init_ts();
+    // Imprime la tabla de símbolos para verificar su estado inicial (opcional)
     imprimir_ts();
-    free_ts(); // Libera recursos de la tabla de símbolos
 
-    // Suponiendo la existencia de cerrar_archivo() en sistema_entrada
-    //cerrar_archivo(); // Cierra el archivo y limpia recursos del sistema de entrada
+    printf("\n########################################\n");
+
+    // Comienza el análisis sintáctico y léxico
+    analizar();
+
+    printf("\n########################################\n");
+
+    // Imprime la tabla de símbolos para ver el estado final después del análisis
+    imprimir_ts();
+    // Libera recursos de la tabla de símbolos
+    free_ts();
+
+    // Cierra el archivo y limpia recursos del sistema de entrada
+    cerrar_sistema_entrada();
 
     return 0;
 }

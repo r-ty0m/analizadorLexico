@@ -2,93 +2,225 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-
 #include "analizador_lexico.h"
 #include "tabla_simbolos.h"
+#include "sistema_entrada.h"
 
-static char caracter_devuelto = '\0'; // Inicializado a '\0' para indicar que no hay carácter devuelto.
+#define ESTADO_BASE 0
+#define ESTADO_ALFANUM 1
+#define ESTADO_PLUS 2
+#define ESTADO_MINUS 3
+#define ESTADO_EQUALS 4
+#define ESTADO_ASTERISK 5
+#define ESTADO_SLASH 6
+#define ESTADO_PERCENT 7
+#define ESTADO_MENOR 8
+#define ESTADO_MAYOR 9
+#define ESTADO_EXCLAMATION 10
+#define ESTADO_AMPERSAND 11
+#define ESTADO_PIPE 12
+#define ESTADO_CARET 13
+#define ESTADO_AT 14
+#define ESTADO_DOUBLE_ASTERISK 15
+#define ESTADO_DOUBLE_SLASH 16
+#define ESTADO_MENOR_MENOR 17;
 
-char siguiente_caracter() {
-    static const char *entrada = "import scipy.stats as st *";
-    static int posicion = 0;
 
-    // Verificar si hay un carácter previamente devuelto.
-    if (caracter_devuelto != '\0') {
-        char c = caracter_devuelto;
-        caracter_devuelto = '\0'; // Resetear para indicar que no hay carácter devuelto.
-        return c;
-    }
 
-    char c = entrada[posicion];
 
-    // Avanzar la posición si no hemos llegado al final del string.
-    if (c != '\0') {
-        posicion++;
-    }
-
-    return c;
+void asignar_lexema(comp_lexico *lex, char *buffer, int tipo) {
+    lex->lexema = strdup(buffer);
+    lex->tipo_componente = tipo;
 }
-
-void devolver_caracter(char c) {
-    // Almacenar el carácter para ser retornado en la próxima llamada a siguiente_caracter.
-    caracter_devuelto = c;
-}
-
-
 
 void sig_comp_lexico(comp_lexico *lex) {
-    static char buffer[1024];
+    static char buffer[N+1];
     int buf_len = 0;
     char c;
-    int estado = 0; // Estado inicial del autómata.
+    int estado = ESTADO_BASE; // Estado inicial del autómata.
 
     memset(buffer, 0, sizeof(buffer)); // Limpiamos el buffer.
 
     while (1) {
         c = siguiente_caracter();
-        //printf("\nSiguiente carácter: %c", c);
 
         switch (estado) {
-            case 0: // Estado inicial, buscando el inicio de un identificador.
-                if (isalpha(c)) {
-                    buffer[buf_len++] = c;
-                    estado = 1; // Cambiamos al estado de recolección de identificador.
-                } else if (c == 42 ){ // Si es *
-                    lex->tipo_componente = EOF;
+            case ESTADO_BASE: // Estado inicial, buscando el inicio de un identificador.
+
+                // CADENAS ALFANUMÉRICAS (IDENTIFICADOR)
+                if (isalpha(c) || c == '_') { // Puede ser identificador
+                    //buffer[buf_len++] = c;
+                    estado = ESTADO_ALFANUM;
+                }
+
+                // DELIMITADORES Y OPERADORES
+                else if (c == '+') {
+                    estado = ESTADO_PLUS;
+                } else if (c == '-') {
+                    estado = ESTADO_MINUS;
+                } else if (c == '=') {
+                    estado = ESTADO_EQUALS;
+                } else if (c == '*') {
+                    estado = ESTADO_ASTERISK;
+                } else if (c == '/') {
+                    estado = ESTADO_SLASH;
+                } else if (c == '%') {
+                    estado = ESTADO_PERCENT;
+                } else if (c == '<') {
+                    estado = ESTADO_MENOR;
+                } else if (c == '>') {
+                    estado = ESTADO_MAYOR;
+                } else if (c == '!') {
+                    estado = ESTADO_EXCLAMATION;
+                } else if (c == '&') {
+                    estado = ESTADO_AMPERSAND;
+                } else if (c == '|') {
+                    estado = ESTADO_PIPE;
+                } else if (c == '^') {
+                    estado = ESTADO_CARET;
+                } else if (c == '~') {
+                    asignar_lexema(lex, "~", OP_COMPLEMENTO_A_UNO);
                     return;
-                } else if (c == 46) { // Si es .
-                    buffer[buf_len++] = c;
-                    buffer[buf_len++] = '\0'; // Aseguramos que el string esté terminado correctamente.
-                    lex->lexema = strdup(buffer);
-                    lex->tipo_componente = PUNTO;
-                    estado=0;
+                } else if (c == '(') {
+                    asignar_lexema(lex, "(", DELIM_PARENTESIS_ABRIR);
+                    return;
+                } else if (c == ')') {
+                    asignar_lexema(lex, ")", DELIM_PARENTESIS_CERRAR);
+                    return;
+                } else if (c == '[') {
+                    asignar_lexema(lex, "[", DELIM_CORCHETE_ABRIR);
+                    return;
+                } else if (c == ']') {
+                    asignar_lexema(lex, "]", DELIM_CORCHETE_CERRAR);
+                    return;
+                } else if (c == '{') {
+                    asignar_lexema(lex, "{", DELIM_LLAVE_ABRIR);
+                    return;
+                } else if (c == '}') {
+                    asignar_lexema(lex, "}", DELIM_LLAVE_CERRAR);
+                    return;
+                } else if (c == ',') {
+                    asignar_lexema(lex, ",", DELIM_COMA);
+                    return;
+                } else if (c == ';') {
+                    asignar_lexema(lex, ";", DELIM_PUNTO_Y_COMA);
+                    return;
+                } else if (c == '.') {
+                    asignar_lexema(lex, ".", DELIM_PUNTO);
+                    return;
+                } else if (c == '@') {
+                    estado = ESTADO_AT;
+                }
+
+
+                //
+                else if (c == EOF || c == '$') { // Si es EOF
+                    lex->tipo_componente = EOF;
+                    printf("\n $ ENCONTRADO - CERRANDO\n");
+                    return;
+                }
+                else if (c == '#') { // Comentario de una línea
+                    estado = 2000; // Cambiamos al estado de comentario de una línea.
+                }
+                else if (c == '\n') {
+                    buffer[buf_len++]=c;
+                    asignar_lexema(lex, buffer, LF);
                     return; // Salimos de la función.
                 }
                 break;
 
-            case 1: // Estado de recolección de identificador.
-                if (isalnum(c) || c == '_' || c == '-') {
-                    buffer[buf_len++] = c;
-                    //printf("\nbuffer: %s", buffer);
+
+            //SUBAUTÓMATA ALFANUM
+            case ESTADO_ALFANUM: // Estado de recolección de identificador.
+                if (isalnum(c) || c == '_') {
+                    //buffer[buf_len++] = c;
                 } else {
                     // Final del identificador, devolvemos el último carácter al stream si no es EOF.
-                    if (c != EOF) devolver_caracter(c);
+                    if (c != EOF) devolver_caracter();
 
-                    buffer[buf_len] = '\0'; // Aseguramos que el string esté terminado correctamente.
-                    lex->lexema = strdup(buffer);
-                    // Aquí deberías buscar el lexema en la tabla de símbolos para asignar lex->tipo_componente.
+                    char *lexema = devolver_lexema();
+                    lex->lexema = lexema;
+                    //lex->lexema = strdup(buffer);
+                    lex->tipo_componente = buscar_ts(lex->lexema); // Asignar tipo de componente
 
-
-
-                    lex->tipo_componente = buscar_ts(lex->lexema);
-
-                    // Por ahora, asumimos que es un identificador genérico.
-                    //lex->tipo_componente = IDENTIFICADOR;
-                    estado=0;
+                    //estado = ESTADO_BASE;
                     return; // Salimos de la función.
                 }
                 break;
+
+            //SUBAUTÓMATA OPERADORES Y DELIMITADORES
+            case ESTADO_PLUS:
+                if (c == '=') asignar_lexema(lex, "+=", OP_SUMA_ASIGNACION);
+                else { devolver_caracter(); asignar_lexema(lex, "+", OP_SUMA); }
+                return;
+            case ESTADO_MINUS:
+                if (c == '=') asignar_lexema(lex, "-=", OP_RESTA_ASIGNACION);
+                else if (c == '>') asignar_lexema(lex, "->", OP_FLECHA);
+                else { devolver_caracter(); asignar_lexema(lex, "-", OP_RESTA); }
+                return;
+            case ESTADO_ASTERISK:
+                if (c == '=') asignar_lexema(lex, "*=", OP_MULTIPLICACION_ASIGNACION);
+                else if (c == '*'){
+                    estado = ESTADO_DOUBLE_ASTERISK;
+                    break;
+                }
+                else { devolver_caracter(); asignar_lexema(lex, "*", OP_MULTIPLICACION); }
+                return;
+            case ESTADO_DOUBLE_ASTERISK:
+                if (c == '=') asignar_lexema(lex, "**=", OP_POTENCIA_ASIGNACION);
+                else { devolver_caracter(); asignar_lexema(lex, "**", OP_POTENCIA); }
+                return;
+            case ESTADO_EQUALS:
+                if( c == '=') asignar_lexema(lex, "==", OP_EQUAL_EQUAL);
+                else{
+                    devolver_caracter();
+                    asignar_lexema(lex, "=", OP_EQUAL);
+                }
+                return;
+            case ESTADO_SLASH:
+                if(c == '/'){
+                    estado = ESTADO_DOUBLE_SLASH;
+                    break;
+                }else if (c == '=') asignar_lexema(lex, "/=", OP_SLASH_EQUAL);
+                else{
+                    devolver_caracter();
+                    asignar_lexema(lex, "/", OP_SLASH);
+                }
+                return;
+            case ESTADO_DOUBLE_SLASH:
+                if(c == '=') asignar_lexema(lex, "//=", OP_SLASH_SLASH_EQUAL);
+                else{
+                    devolver_caracter();
+                    asignar_lexema(lex, "/", OP_SLASH_SLASH);
+                }
+                return;
+            case ESTADO_PERCENT:
+                if (c == '=') asignar_lexema(lex, "%=", OP_PERCENT_EQUAL);
+                else { devolver_caracter(); asignar_lexema(lex, "%", OP_PERCENT); }
+                return;
+            case ESTADO_MENOR:
+                if(c == '<'){
+                    estado = ESTADO_MENOR_MENOR;
+                    break;
+                }
+                else{
+                    devolver_caracter();
+                    asignar_lexema(lex, "<", OP_MENOR);
+                }
+                return;
+            case ESTADO_MAYOR:
+                if(c == '<'){
+                    estado = ESTADO_MENOR_MENOR;
+                    break;
+                }
+                else{
+                    devolver_caracter();
+                    asignar_lexema(lex, "<", OP_MAYOR);
+                }
+                return;
+
+
+
         }
     }
 }
-

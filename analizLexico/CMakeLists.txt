@@ -9,4 +9,8 @@ add_executable(analizLexico main.c
         gestion_errores.c
         sistema_entrada.c
         tabla_simbolos.c
-        abb.c)
+        abb.c
+        sistema_entrada_save_c
+        sistema_entrada_save_h
+        analiz_lexico_save_c
+        analiz_lexico_save_h)
