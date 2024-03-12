@@ -3,6 +3,5 @@
 
 // Eliminamos el parámetro de la función analizar
 void analizar();
-void imprimir();
 
 #endif

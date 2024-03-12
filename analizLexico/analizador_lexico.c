@@ -26,8 +26,6 @@
 #define ESTADO_MENOR_MENOR 17;
 
 
-
-
 void asignar_lexema(comp_lexico *lex, char *strLex, int tipo) {
     lex->lexema = strdup(strLex);
     lex->tipo_componente = tipo;
