@@ -1,7 +1,7 @@
 #ifndef SISTEMA_ENTRADA_H
 #define SISTEMA_ENTRADA_H
 
-#define N 8 // Tamaño de cada centinela
+#define N 64 // Tamaño de cada centinela
 
 // Inicializa el sistema de entrada.
 void inicializar_sistema_entrada(const char *nombre_archivo);
@@ -19,5 +19,7 @@ char *devolver_lexema();
 
 // Devuelve el tamaño actual del lexema en proceso.
 int tamano_lexema();
+
+void avanzar_inicio();
 
 #endif // SISTEMA_ENTRADA_H

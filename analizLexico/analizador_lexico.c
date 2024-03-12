@@ -28,13 +28,13 @@
 
 
 
-void asignar_lexema(comp_lexico *lex, char *buffer, int tipo) {
-    lex->lexema = strdup(buffer);
+void asignar_lexema(comp_lexico *lex, char *strLex, int tipo) {
+    lex->lexema = strdup(strLex);
     lex->tipo_componente = tipo;
 }
 
 void sig_comp_lexico(comp_lexico *lex) {
-    static char buffer[N+1];
+    static char buffer[N];
     int buf_len = 0;
     char c;
     int estado = ESTADO_BASE; // Estado inicial del autómata.
@@ -106,7 +106,12 @@ void sig_comp_lexico(comp_lexico *lex) {
                     asignar_lexema(lex, ";", DELIM_PUNTO_Y_COMA);
                     return;
                 } else if (c == '.') {
-                    asignar_lexema(lex, ".", DELIM_PUNTO);
+                    //asignar_lexema(lex, ".", DELIM_PUNTO);
+
+                    char *lexema = devolver_lexema();
+                    lex->lexema = lexema;
+                    //lex->lexema = strdup(buffer);
+                    lex->tipo_componente = 46; // Asignar tipo de componente
                     return;
                 } else if (c == '@') {
                     estado = ESTADO_AT;
@@ -123,9 +128,11 @@ void sig_comp_lexico(comp_lexico *lex) {
                     estado = 2000; // Cambiamos al estado de comentario de una línea.
                 }
                 else if (c == '\n') {
-                    buffer[buf_len++]=c;
-                    asignar_lexema(lex, buffer, LF);
+                    asignar_lexema(lex,  "\n", LF);
+                    avanzar_inicio();
                     return; // Salimos de la función.
+                }else{
+                    avanzar_inicio();
                 }
                 break;
 
