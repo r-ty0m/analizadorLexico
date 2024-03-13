@@ -1,0 +1,38 @@
+Coger todos ficheros fuente .c .h y meter el wilcoxon.py
+Dentro de esta carpeta estructuramos el código como queramos
+No debemos poner nuestro nombre y apellidos ni nada más en ningún fichero.
+No se nos debe reconocer al ser evaluados por los compañeros. 
+El código fuente debe compilar y ejecutar sin errores ni warnings en ubuntu.
+La práctica debe de venir acompañada de un fichero makefile o similar que permita
+la compilación (y posible ejecución) de todo el proyecto.
+Debe incluirse un README en el que se explique como se compila y ejecuta (args etc)
+y explicar cuestiones del código relevantes para la evaluación.
+Es IMPORTANTE que el código esté documentado correctamente.
+
+Si hay lexemas con longitud muy larga se pueden acortar en la salida.
+En lexemas como /n o EOF se puede imprimir algo que entienda que es ese lexema
+ya que por pantalla se verá mal.
+Antes de mostrar la secuencia de lexemas se debe mostrar la TS después de la
+inicialización y antes del análisis (mostrar qué palabras reservadas se meten).
+Una vez el análisis termina se debe mostrar la TS al final (con las reservadas
+y el conjunto de identificadores nuevos encontrados).
+
+Es IMPORTANTE una gestión de memoria eficiente y correcta. Usar valgrind por ejemplo.
+
+
+QUÉ EVALUAR:
+Memoria - Liberación y memoria usada (num buffers etc) (Usar valgrind también)
+Contenido de la TS antes y después del análisis
+Lexemas
+
+Redactar un informe de evaluación por cada práctica evaluada
+Poner partes buenas y partes malas.
+Errores que existen, por qué existen y como se pueden solucionar.
+
+
+DUDAS:
+Hay que hacer todos los posibles casos (todos los delimitadores, operadores...) NO
+Qué meter en la tabla de símbolos (Operadores de más de 1 caracter se mete?) NO
+Qué meter en definiciones.h (Los ascii de caracteres únicos +,-... se mete?) LO QUE QUIERAS
+El espacio en blanco es comp_lexico? NO
+Se devuelve indent y dedent? SI LO HACES HAY QUE USAR UNA PILA. SE PUEDE HACER SI QUIERES

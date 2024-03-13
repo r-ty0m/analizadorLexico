@@ -22,7 +22,7 @@ void analizar() {
         if (lex->tipo_componente != EOF && lex->lexema!=NULL) {
 
             printf("\ntamaño lex->lexema: [%d]\n", (strlen(lex->lexema)));
-            printf("<%d, %s>\n", lex->tipo_componente, lex->lexema);
+            printf("<%d,%s>\n", lex->tipo_componente, lex->lexema);
         } else break;
 
         if (lex->lexema != NULL) {

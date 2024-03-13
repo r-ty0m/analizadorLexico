@@ -1,231 +1,336 @@
 #include <ctype.h>
+#include <stdio.h>
+#include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include "analizador_lexico.h"
 #include "tabla_simbolos.h"
 #include "sistema_entrada.h"
 
-#define ESTADO_BASE 0
-#define ESTADO_ALFANUM 1
-#define ESTADO_PLUS 2
-#define ESTADO_MINUS 3
-#define ESTADO_EQUALS 4
-#define ESTADO_ASTERISK 5
-#define ESTADO_SLASH 6
-#define ESTADO_PERCENT 7
-#define ESTADO_MENOR 8
-#define ESTADO_MAYOR 9
-#define ESTADO_EXCLAMATION 10
-#define ESTADO_AMPERSAND 11
-#define ESTADO_PIPE 12
-#define ESTADO_CARET 13
-#define ESTADO_AT 14
-#define ESTADO_DOUBLE_ASTERISK 15
-#define ESTADO_DOUBLE_SLASH 16
-#define ESTADO_MENOR_MENOR 17;
+// Definiciones de los estados
+#define ESTADO_INICIAL 0
+#define ESTADO_LINEA_LOGICA 1
+#define ESTADO_COMENTARIO 2
+#define ESTADO_DECLARACION_CODIFICACION 3
+#define ESTADO_IDENTIFICADOR 4
+#define ESTADO_NUMERO 5
+#define ESTADO_OPERADOR_DELIMITADOR 6
+#define ESTADO_TOKEN_ESPECIAL 7
+#define ESTADO_PUNTO 8
+
+//ESTADOS DE SUBAUTOMATAS
+
+#define ESTADO_NUMERO_ENTERO 10
+#define ESTADO_NUMERO_FLOAT 11
+#define ESTADO_NUMERO_ELEVADO 12
+#define ESTADO_NUMERO_HEX 13
+
+// Variables globales
+int estado = ESTADO_INICIAL;
+int aceptado = 0;
+
+// Subautómatas iniciales
+void subautomata_linea_logica();
+void subautomata_comentario();
+void subautomata_declaracion_codificacion(comp_lexico *lex, char c);
+void subautomata_identificador(comp_lexico *lex, char c);
+void subautomata_numeral(comp_lexico *lex, char c);
+void subautomata_operador_delimitador(comp_lexico *lex, char c);
+void subautomata_token_especial();
+void subautomata_punto(comp_lexico *lex,char c);
+
+//Subautómatas intermedios
+void subautomata_numeral_entero(comp_lexico *lex, char c);
+void subautomata_numeral_hex(comp_lexico *lex, char c);
+void subautomata_numeral_elevado(comp_lexico *lex, char c);
+void subautomata_numeral_float(comp_lexico *lex, char c);
 
 
-void asignar_lexema(comp_lexico *lex, char *strLex, int tipo) {
-    lex->lexema = strdup(strLex);
+
+//Funciones auxiliares
+void aceptar(){
+    aceptado = 1;
+    estado = ESTADO_INICIAL;
+}
+void aceptar_asignar_desde_ts(comp_lexico *lex){
+    lex->lexema = strdup(devolver_lexema());
+    lex->tipo_componente = buscar_ts(lex->lexema);
+    aceptar();
+}
+void aceptar_asignar_lexema(comp_lexico *lex, int tipo) {
+    lex->lexema = strdup(devolver_lexema());
     lex->tipo_componente = tipo;
+    aceptar();
 }
 
 void sig_comp_lexico(comp_lexico *lex) {
-    static char buffer[N];
-    int buf_len = 0;
     char c;
-    int estado = ESTADO_BASE; // Estado inicial del autómata.
+    aceptado=0;
+    estado = ESTADO_INICIAL;
 
-    memset(buffer, 0, sizeof(buffer)); // Limpiamos el buffer.
-
-    while (1) {
-        c = siguiente_caracter();
-
-        switch (estado) {
-            case ESTADO_BASE: // Estado inicial, buscando el inicio de un identificador.
-
-                // CADENAS ALFANUMÉRICAS (IDENTIFICADOR)
-                if (isalpha(c) || c == '_') { // Puede ser identificador
-                    //buffer[buf_len++] = c;
-                    estado = ESTADO_ALFANUM;
-                }
-
-                // DELIMITADORES Y OPERADORES
-                else if (c == '+') {
-                    estado = ESTADO_PLUS;
-                } else if (c == '-') {
-                    estado = ESTADO_MINUS;
-                } else if (c == '=') {
-                    estado = ESTADO_EQUALS;
-                } else if (c == '*') {
-                    estado = ESTADO_ASTERISK;
-                } else if (c == '/') {
-                    estado = ESTADO_SLASH;
-                } else if (c == '%') {
-                    estado = ESTADO_PERCENT;
-                } else if (c == '<') {
-                    estado = ESTADO_MENOR;
-                } else if (c == '>') {
-                    estado = ESTADO_MAYOR;
-                } else if (c == '!') {
-                    estado = ESTADO_EXCLAMATION;
-                } else if (c == '&') {
-                    estado = ESTADO_AMPERSAND;
-                } else if (c == '|') {
-                    estado = ESTADO_PIPE;
-                } else if (c == '^') {
-                    estado = ESTADO_CARET;
-                } else if (c == '~') {
-                    asignar_lexema(lex, "~", OP_COMPLEMENTO_A_UNO);
-                    return;
-                } else if (c == '(') {
-                    asignar_lexema(lex, "(", DELIM_PARENTESIS_ABRIR);
-                    return;
-                } else if (c == ')') {
-                    asignar_lexema(lex, ")", DELIM_PARENTESIS_CERRAR);
-                    return;
-                } else if (c == '[') {
-                    asignar_lexema(lex, "[", DELIM_CORCHETE_ABRIR);
-                    return;
-                } else if (c == ']') {
-                    asignar_lexema(lex, "]", DELIM_CORCHETE_CERRAR);
-                    return;
-                } else if (c == '{') {
-                    asignar_lexema(lex, "{", DELIM_LLAVE_ABRIR);
-                    return;
-                } else if (c == '}') {
-                    asignar_lexema(lex, "}", DELIM_LLAVE_CERRAR);
-                    return;
-                } else if (c == ',') {
-                    asignar_lexema(lex, ",", DELIM_COMA);
-                    return;
-                } else if (c == ';') {
-                    asignar_lexema(lex, ";", DELIM_PUNTO_Y_COMA);
-                    return;
-                } else if (c == '.') {
-                    //asignar_lexema(lex, ".", DELIM_PUNTO);
-
-                    char *lexema = devolver_lexema();
-                    lex->lexema = lexema;
-                    //lex->lexema = strdup(buffer);
-                    lex->tipo_componente = 46; // Asignar tipo de componente
-                    return;
-                } else if (c == '@') {
-                    estado = ESTADO_AT;
-                }
-
-
-                //
-                else if (c == EOF || c == '$') { // Si es EOF
-                    lex->tipo_componente = EOF;
-                    printf("\n $ ENCONTRADO - CERRANDO\n");
-                    return;
-                }
-                else if (c == '#') { // Comentario de una línea
-                    estado = 2000; // Cambiamos al estado de comentario de una línea.
-                }
-                else if (c == '\n') {
-                    asignar_lexema(lex,  "\n", LF);
+    while(aceptado!=1) {
+        //c = siguiente_caracter();
+        switch(estado) {
+            case ESTADO_INICIAL:
+                c = siguiente_caracter();
+                if (c == '\n' || c == '\\') {
+                    estado = ESTADO_LINEA_LOGICA;
                     avanzar_inicio();
-                    return; // Salimos de la función.
+                } else if (c == '#') {
+                    estado = ESTADO_COMENTARIO;
+                    avanzar_inicio();
+                } else if (isalpha(c) || c == '_') {
+                    estado = ESTADO_IDENTIFICADOR;
+                } else if (isdigit(c)) {
+                    estado = ESTADO_NUMERO;
+                    //avanzar_inicio();
+                } else if (strchr("+-*/=<>:{([])}", c) != NULL) { //TODO: Cambiar esto por algo más eficiente
+                    estado = ESTADO_OPERADOR_DELIMITADOR;
+                    //avanzar_inicio();
+                } else if (c == ' ' || c == '\t') {
+                    //estado = ESTADO_TOKEN_ESPECIAL;
+                    avanzar_inicio();
+                }else if (c == '.') {
+                    estado = ESTADO_PUNTO;
+                    //avanzar_inicio();
                 }else{
                     avanzar_inicio();
                 }
                 break;
 
 
-            //SUBAUTÓMATA ALFANUM
-            case ESTADO_ALFANUM: // Estado de recolección de identificador.
-                if (isalnum(c) || c == '_') {
-                    //buffer[buf_len++] = c;
-                } else {
-                    // Final del identificador, devolvemos el último carácter al stream si no es EOF.
-                    if (c != EOF) devolver_caracter();
-
-                    char *lexema = devolver_lexema();
-                    lex->lexema = lexema;
-                    //lex->lexema = strdup(buffer);
-                    lex->tipo_componente = buscar_ts(lex->lexema); // Asignar tipo de componente
-
-                    //estado = ESTADO_BASE;
-                    return; // Salimos de la función.
-                }
+            //ESTADOS SUBAUTÓMATAS INICIALES
+            case ESTADO_IDENTIFICADOR:
+                subautomata_identificador(lex, c);
+                break;
+            case ESTADO_OPERADOR_DELIMITADOR:
+                subautomata_operador_delimitador(lex, c);
+                break;
+            case ESTADO_PUNTO:
+                subautomata_punto(lex,c);
+                break;
+            case ESTADO_LINEA_LOGICA:
+                subautomata_linea_logica();
+                break;
+            case ESTADO_COMENTARIO:
+                subautomata_comentario();
+                break;
+            case ESTADO_NUMERO:
+                subautomata_numeral(lex, c);
+                break;
+            case ESTADO_TOKEN_ESPECIAL:
+                subautomata_token_especial();
                 break;
 
-            //SUBAUTÓMATA OPERADORES Y DELIMITADORES
-            case ESTADO_PLUS:
-                if (c == '=') asignar_lexema(lex, "+=", OP_SUMA_ASIGNACION);
-                else { devolver_caracter(); asignar_lexema(lex, "+", OP_SUMA); }
-                return;
-            case ESTADO_MINUS:
-                if (c == '=') asignar_lexema(lex, "-=", OP_RESTA_ASIGNACION);
-                else if (c == '>') asignar_lexema(lex, "->", OP_FLECHA);
-                else { devolver_caracter(); asignar_lexema(lex, "-", OP_RESTA); }
-                return;
-            case ESTADO_ASTERISK:
-                if (c == '=') asignar_lexema(lex, "*=", OP_MULTIPLICACION_ASIGNACION);
-                else if (c == '*'){
-                    estado = ESTADO_DOUBLE_ASTERISK;
-                    break;
-                }
-                else { devolver_caracter(); asignar_lexema(lex, "*", OP_MULTIPLICACION); }
-                return;
-            case ESTADO_DOUBLE_ASTERISK:
-                if (c == '=') asignar_lexema(lex, "**=", OP_POTENCIA_ASIGNACION);
-                else { devolver_caracter(); asignar_lexema(lex, "**", OP_POTENCIA); }
-                return;
-            case ESTADO_EQUALS:
-                if( c == '=') asignar_lexema(lex, "==", OP_EQUAL_EQUAL);
-                else{
-                    devolver_caracter();
-                    asignar_lexema(lex, "=", OP_EQUAL);
-                }
-                return;
-            case ESTADO_SLASH:
-                if(c == '/'){
-                    estado = ESTADO_DOUBLE_SLASH;
-                    break;
-                }else if (c == '=') asignar_lexema(lex, "/=", OP_SLASH_EQUAL);
-                else{
-                    devolver_caracter();
-                    asignar_lexema(lex, "/", OP_SLASH);
-                }
-                return;
-            case ESTADO_DOUBLE_SLASH:
-                if(c == '=') asignar_lexema(lex, "//=", OP_SLASH_SLASH_EQUAL);
-                else{
-                    devolver_caracter();
-                    asignar_lexema(lex, "/", OP_SLASH_SLASH);
-                }
-                return;
-            case ESTADO_PERCENT:
-                if (c == '=') asignar_lexema(lex, "%=", OP_PERCENT_EQUAL);
-                else { devolver_caracter(); asignar_lexema(lex, "%", OP_PERCENT); }
-                return;
-            case ESTADO_MENOR:
-                if(c == '<'){
-                    estado = ESTADO_MENOR_MENOR;
-                    break;
-                }
-                else{
-                    devolver_caracter();
-                    asignar_lexema(lex, "<", OP_MENOR);
-                }
-                return;
-            case ESTADO_MAYOR:
-                if(c == '<'){
-                    estado = ESTADO_MENOR_MENOR;
-                    break;
-                }
-                else{
-                    devolver_caracter();
-                    asignar_lexema(lex, "<", OP_MAYOR);
-                }
-                return;
-
-
-
+            //ESTADOS SUBAUTÓMATAS INTERMEDIOS
+            case ESTADO_NUMERO_ENTERO:
+                subautomata_numeral_entero(lex, c);
+                break;
+            case ESTADO_NUMERO_HEX:
+                subautomata_numeral_hex(lex,c);
+                break;
         }
+    }
+}
+
+// #####################################################
+//        IMPLEMENTACIÓN SUBAUTÓMATAS INICIALES
+// #####################################################
+
+void subautomata_punto(comp_lexico *lex, char c){
+    c = siguiente_caracter();
+    if (isdigit(c)) { // Es un número, posiblemente un literal flotante
+        // Aquí asumimos que devolvemos el '.' al flujo para que el subautomata_float
+        // pueda procesar el número completo correctamente, incluyendo el punto inicial.
+        //devolver_caracter(); // Devolvemos el punto
+        //devolver_caracter(); // Devolvemos el dígito para procesarlo en el contexto del número completo
+        //subautomata_float(lex); // Suponiendo que este subautómata está implementado para manejar flotantes.
+    } else { // No es un número, aceptamos el punto como token por sí mismo.
+        devolver_caracter(); // Devolvemos el carácter no numérico al flujo
+        aceptar_asignar_lexema(lex, OP_PUNTO);
+    }
+}
+
+void subautomata_linea_logica() {
+    // Implementar el subautómata correspondiente
+    estado = ESTADO_INICIAL; // O manejar según sea necesario
+}
+
+void subautomata_comentario() {
+    char c;
+    do {
+        c = siguiente_caracter();
+    } while(c != '\n' && c != EOF);
+    estado = ESTADO_INICIAL;
+}
+
+void subautomata_identificador(comp_lexico *lex, char c) {
+    c = siguiente_caracter();
+    if (!isalnum(c) && c != '_') {
+        if (c != EOF) devolver_caracter();
+        aceptar_asignar_desde_ts(lex);
+    }
+}
+
+void subautomata_numeral(comp_lexico *lex, char c) {
+    c = siguiente_caracter();
+    if (isdigit(c)) {
+        estado = ESTADO_NUMERO_ENTERO;
+    }else if (c == '.'){
+        estado = ESTADO_NUMERO_FLOAT;
+    }else if (c == 'e'){
+        estado = ESTADO_NUMERO_ELEVADO;
+    }else if (c == 'x'){
+        estado = ESTADO_NUMERO_HEX;
+    }else{
+        devolver_caracter();
+        aceptar_asignar_lexema(lex, INTEGER);
+    }
+}
+
+void subautomata_operador_delimitador(comp_lexico *lex, char c) {
+    //char c = siguiente_caracter(); // Suponemos que ya tenemos el primer carácter del operador/delimitador.
+    char siguiente;
+
+    switch (c) {
+        case '+':
+            siguiente = siguiente_caracter();
+            if (siguiente == '=') {
+                aceptar_asignar_lexema(lex, OP_SUMA_ASIGNACION);
+            } else {
+                devolver_caracter();
+                aceptar_asignar_lexema(lex, OP_SUMA);
+            }
+            break;
+        case '-':
+            siguiente = siguiente_caracter();
+            if (siguiente == '=') {
+                aceptar_asignar_lexema(lex, OP_RESTA_ASIGNACION);
+            } else if (siguiente == '>') {
+                aceptar_asignar_lexema(lex, OP_FLECHA);
+            } else {
+                devolver_caracter();
+                aceptar_asignar_lexema(lex, OP_RESTA);
+            }
+            break;
+        case '*':
+            siguiente = siguiente_caracter();
+            if (siguiente == '=') {
+                aceptar_asignar_lexema(lex, OP_MULTI_ASIGNACION);
+            } else if (siguiente == '*') {
+                aceptar_asignar_lexema(lex, OP_POTENCIA);
+                //TODO: Implementar cambio de estado a ** (en wilcoxon no ocurre, implementar solo si es necesario)
+            } else {
+                devolver_caracter();
+                aceptar_asignar_lexema(lex, OP_MULTIPLICACION);
+            }
+            break;
+        case '/':
+            siguiente = siguiente_caracter();
+            if (siguiente == '=') {
+                aceptar_asignar_lexema(lex, OP_DIV_ASIGNACION);
+            }else if (siguiente == '/') {
+                //aceptar_asignar_lexema(lex, "**", OP_POTENCIA);
+                //TODO: Implementar cambio de estado a // en wilcoxon no ocurre, implementar solo si es necesario)
+            } else {
+                devolver_caracter();
+                aceptar_asignar_lexema(lex, OP_DIVISION);
+            }
+            break;
+        case '=':
+            siguiente = siguiente_caracter();
+            if (siguiente == '=') {
+                aceptar_asignar_lexema(lex, OP_EQUAL_EQUAL);
+            }else {
+                devolver_caracter();
+                aceptar_asignar_lexema(lex, OP_EQUAL);
+            }
+            break;
+        case '<':
+            siguiente = siguiente_caracter();
+            if (siguiente == '=') {
+                aceptar_asignar_lexema(lex, OP_MENOR_EQUAL);
+            }else if (siguiente == '<') {
+                //aceptar_asignar_lexema(lex, "**", OP_POTENCIA);
+                //TODO: Implementar cambio de estado a << en wilcoxon no ocurre, implementar solo si es necesario)
+            } else {
+                devolver_caracter();
+                aceptar_asignar_lexema(lex, OP_MENOR);
+            }
+            break;
+        case '>':
+            siguiente = siguiente_caracter();
+            if (siguiente == '=') {
+                aceptar_asignar_lexema(lex, OP_MAYOR_EQUAL);
+            }else if (siguiente == '/') {
+                //aceptar_asignar_lexema(lex, "**", OP_POTENCIA);
+                //TODO: Implementar cambio de estado a // en wilcoxon no ocurre, implementar solo si es necesario)
+            } else {
+                devolver_caracter();
+                aceptar_asignar_lexema(lex, OP_MAYOR);
+            }
+            break;
+        case ':':
+            siguiente = siguiente_caracter();
+            if (siguiente == '=') {
+                aceptar_asignar_lexema(lex, OP_DOS_PUNTOS_EQUAL);
+            }else {
+                devolver_caracter();
+                aceptar_asignar_lexema(lex, OP_DOS_PUNTOS);
+            }
+            break;
+        case '{':
+            aceptar_asignar_lexema(lex, DELIM_LLAVE_ABRIR);
+            break;
+        case '}':
+            aceptar_asignar_lexema(lex, DELIM_LLAVE_CERRAR);
+            break;
+        case '(':
+            aceptar_asignar_lexema(lex, DELIM_PARENTESIS_ABRIR);
+            break;
+        case ')':
+            aceptar_asignar_lexema(lex, DELIM_PARENTESIS_CERRAR);
+            break;
+        case '[':
+            aceptar_asignar_lexema(lex, DELIM_CORCHETE_ABRIR);
+            break;
+        case ']':
+            aceptar_asignar_lexema(lex, DELIM_CORCHETE_CERRAR);
+            break;
+        case ',':
+            aceptar_asignar_lexema(lex, DELIM_COMA);
+            break;
+        case ';':
+            aceptar_asignar_lexema(lex, DELIM_PUNTO_Y_COMA);
+            break;
+
+
+    }
+}
+
+void subautomata_token_especial() {
+    char c;
+    // Implementar la lógica para procesar tokens especiales
+    estado = ESTADO_INICIAL;
+}
+
+// #####################################################
+//        IMPLEMENTACIÓN SUBAUTÓMATAS INTERMEDIOS
+// #####################################################
+
+//subautómatas numerales
+void subautomata_numeral_entero(comp_lexico *lex, char c){
+    c = siguiente_caracter();
+    if (!isdigit(c)) {
+        devolver_caracter();
+        aceptar_asignar_lexema(lex, INTEGER);
+    }
+}
+
+void subautomata_numeral_hex(comp_lexico *lex, char c){
+    c = siguiente_caracter();
+    if (!isdigit(c) && (c != 'a') && (c != 'b') && (c != 'c') && (c != 'd') && (c != 'e') && (c != 'f')) {
+        devolver_caracter();
+        aceptar_asignar_lexema(lex, INTEGER);
     }
 }
