@@ -1,12 +1,9 @@
 #ifndef DEFINICIONES_H
 #define DEFINICIONES_H
 
-#define OP_COMPLEMENTO_A_UNO 400
-
-
-#define DELIM_PUNTO 46
 
 // ASCII
+#define LF 10
 #define OP_SUMA 43
 #define OP_RESTA 45
 #define OP_MULTIPLICACION 42
@@ -17,7 +14,7 @@
 #define OP_DOS_PUNTOS 58
 #define OP_PUNTO 46
 
-#define DELIM_CORCHETE_ABRIR 123
+#define DELIM_CORCHETE_ABRIR 91
 #define DELIM_CORCHETE_CERRAR 93
 #define DELIM_PARENTESIS_ABRIR 40
 #define DELIM_PARENTESIS_CERRAR 41
@@ -39,23 +36,12 @@
 #define OP_MAYOR_EQUAL 419
 #define OP_DOS_PUNTOS_EQUAL 420
 
-//NUMEROS
-
+//TIPOS
 #define INTEGER 450
+#define FLOAT 451
+#define STRING 452
 
 
-
-
-
-#define OP_MULTIPLICACION_ASIGNACION 415
-#define OP_POTENCIA_ASIGNACION 418
-#define OP_SLASH_EQUAL 421
-#define OP_SLASH 422
-#define OP_SLASH_SLASH_EQUAL 423
-#define OP_SLASH_SLASH 424
-#define OP_PERCENT_EQUAL 425
-#define OP_PERCENT 37
-#define OP_MAYOR 62
 
 #define IMPORT 300
 #define AS 301
@@ -64,7 +50,6 @@
 #define IF 304
 #define WHILE 305
 #define LF 10
-#define IGUAL 61
 #define NOTEQUAL 306
 #define DESCONOCIDO 9999
 #define False 307

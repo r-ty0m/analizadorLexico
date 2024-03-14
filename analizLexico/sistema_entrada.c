@@ -60,15 +60,17 @@ char siguiente_caracter() {
         caracter = se.centinelaB[se.delantero - N];
     }
 
-    // Movemos el puntero delantero una posición adelante
-    se.delantero++;
-
     // Verificamos si hemos alcanzado EOF en el centinela actual
     if (caracter == EOF) {
         if (!feof(se.archivo)) { // Aún hay más archivo por leer
             // Cambiamos de centinela
+
             se.turno = (se.turno == 0) ? 1 : 0;
+            if(se.inicio==se.delantero){ // Así se evita el caso en el que el inicio sea el EOF del bloque
+                se.inicio = (se.turno == 0) ? 0 : N;
+            }
             se.delantero = (se.turno == 0) ? 0 : N; // Reseteamos el puntero delantero para el nuevo centinela
+
 
             // Cargamos el siguiente bloque de datos en el nuevo centinela
             size_t chars_leidos = 0;
@@ -90,12 +92,13 @@ char siguiente_caracter() {
             } else {
                 caracter = se.centinelaB[se.delantero - N];
             }
-            se.delantero++; // Movemos el puntero delantero después de obtener el nuevo carácter
         } else {
             // Si es EOF y hemos terminado de leer el archivo, no hacemos nada más
             // Podríamos manejar de forma diferente si necesitamos cerrar el archivo aquí o más tarde
         }
     }
+    // Movemos el puntero delantero una posición adelante
+    se.delantero++;
 
     return caracter; // Devolvemos el carácter actual
 }
@@ -113,9 +116,10 @@ void devolver_caracter() {
     }
         // Similarmente, si al retroceder estamos en la posición N (el inicio del centinela B en términos del índice global delantero),
         // necesitamos cambiar al centinela A y ajustar el puntero delantero al final del centinela A
-    else if (se.delantero == N && se.turno == 1) {
+    else if (se.delantero == (N-1) && se.turno == 1) {
         se.turno = 0; // Cambiamos al centinela A
         se.delantero = N - 2; // Posicionamos el puntero al final del centinela A
+        //TODO: IMPLEMENTAR QUE NO SE CARGUE EL BLOQUE DE NUEVO
     }
 }
 
@@ -125,7 +129,7 @@ char *devolver_lexema() {
     int tamano = tamano_lexema();
 
     // Creamos un buffer para almacenar el lexema
-    char *lexema = (char *)malloc((tamano) * sizeof(char));
+    char *lexema = (char *)malloc((tamano+1) * sizeof(char));
 
     // Verificamos en qué centinela estamos y copiamos el lexema
     int pos_lexema = 0;
@@ -184,7 +188,7 @@ int tamano_lexema() {
     //Inicio en B y delantero en A
     else if (se.inicio >= N && se.delantero<N) {
         // Calculamos la distancia desde el inicio hasta el final de centinela B (ajustado por N)
-        int distanciaB = ((2*N)+1) - se.inicio;
+        int distanciaB = ((2*N)-1) - se.inicio;
         // Sumamos la distancia desde el inicio de centinela A hasta la posición del delantero
         return distanciaB + se.delantero;
     }

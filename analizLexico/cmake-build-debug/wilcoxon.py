@@ -1,5 +1,13 @@
-0x123 00x123
-wilcoxon_table = 1242 9  {5e-2: {6: 0, 7: 2, 8: 4, 9: 6, 10: 8, 11: 11, 12: 14},
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Sep 15 12:16:21 2015
+"""
+
+import scipy.stats as st
+import math
+import random
+
+wilcoxon_table = {5e-2: {6: 0, 7: 2, 8: 4, 9: 6, 10: 8, 11: 11, 12: 14},
                   1e-2: {7: 0, 8: 2, 9: 3}}
 
 def wilcoxon_test(a, b, alpha = .05):
@@ -44,4 +52,3 @@ if __name__ == '__main__':
     b = [random.randrange(75,95,1)/1e2 for i in xrange(N)]
     if not wilcoxon_test(a, b)['result']:
         print 'Result differences are "statistically significant"'
-$
