@@ -67,6 +67,7 @@ void aceptar(){
     aceptado = 1;
     estado = ESTADO_INICIAL;
 }
+/*
 void aceptar_asignar_desde_ts(comp_lexico *lex){
     char *lex_devuelto = devolver_lexema();
     lex->lexema = strdup(lex_devuelto);
@@ -80,7 +81,18 @@ void aceptar_asignar_lexema(comp_lexico *lex, int tipo) {
     lex->tipo_componente = tipo;
     aceptar();
     free(lex_devuelto);
+}
+ */
 
+void aceptar_asignar_desde_ts(comp_lexico *lex){
+    lex->lexema = devolver_lexema();
+    lex->tipo_componente = buscar_ts(lex->lexema);
+    aceptar();
+}
+void aceptar_asignar_lexema(comp_lexico *lex, int tipo) {
+    lex->lexema = devolver_lexema();
+    lex->tipo_componente = tipo;
+    aceptar();
 }
 
 void sig_comp_lexico(comp_lexico *lex) {
@@ -111,10 +123,9 @@ void sig_comp_lexico(comp_lexico *lex) {
                     estado = ESTADO_OPERADOR_DELIMITADOR;
                     //avanzar_inicio();
                 } else if (c == ' ' || c == '\t') {
-                    //estado = ESTADO_TOKEN_ESPECIAL;
-                    char *temp = devolver_lexema();
-                    free(temp);
-                    //avanzar_inicio();
+                    //*char *temp = devolver_lexema();
+                    //free(temp);
+                    avanzar_inicio();
                 }else if (c == '.') {
                     estado = ESTADO_PUNTO;
                     //avanzar_inicio();
@@ -207,8 +218,14 @@ void subautomata_comentario() {
     char c;
     do {
         c = siguiente_caracter();
+        avanzar_inicio();
     } while(c != '\n' && c != EOF);
-    estado = ESTADO_INICIAL;
+    if(c == '\n'){
+        estado = ESTADO_LINEA_LOGICA;
+    }else{
+        estado = ESTADO_INICIAL;
+    }
+
 }
 
 void subautomata_identificador(comp_lexico *lex, char c) {
@@ -371,6 +388,7 @@ void subautomata_string_o_comment(comp_lexico *lex, char c){
         if (c == '"') {
             //Se detectan tres "
             estado = ESTADO_COMENTARIO_MULTILINEA;
+            free(devolver_lexema()); //Eliminamos el """ del buffer y liberamos memoria
         } else {
             // Es un string vacío
             devolver_caracter();

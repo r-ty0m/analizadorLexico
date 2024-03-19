@@ -19,10 +19,13 @@ void analizar() {
     int mode = 1;
     while (1) {
 
-        lex->tipo_componente = random();
-        lex->lexema = (char *) random();
         sig_comp_lexico(lex);
 
+        /*
+        if(lex->lexema!=NULL && strcmp(lex->lexema, "print")==0){
+            printf("parar");
+        }
+         */
         if (lex->tipo_componente != -1 && lex->lexema!=NULL) {
 
             if(mode==0){
@@ -31,7 +34,7 @@ void analizar() {
                     printf("<%d,\\n>\n", lex->tipo_componente);
                     printf("\033[0;37m");
                 }else{
-                    printf(" <%d,%s> ", lex->tipo_componente, lex->lexema);
+                    printf(" <%d,%s> \n", lex->tipo_componente, lex->lexema);
                 }
             }else if (mode == 1){
                 /*
@@ -66,6 +69,14 @@ void analizar() {
                     } else {
                         // Blanco (default) para otros casos
                         printf("\033[0;34m%s ", lex->lexema);
+                    }
+                } else if(mode==2){
+                    if(lex->tipo_componente==10){
+                        printf(" \033[0;32m");
+                        printf("<%d,\\n>\n", lex->tipo_componente);
+                        printf("\033[0;37m");
+                    }else{
+                        printf(" <%d,%s> ", lex->tipo_componente, lex->lexema);
                     }
                 }
 

@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h> // Para usar memset
+#include "gestion_errores.h"
 
 // Estructura para manejar los centinelas y los punteros
 typedef struct {
@@ -11,6 +12,7 @@ typedef struct {
     int delantero;
     int turno; // 0 para centinelaA, 1 para centinelaB
     FILE *archivo;
+    int excedido; //El lexema ha excedido el tamaño máximo del buffer
 } SistemaEntrada;
 
 SistemaEntrada se;
@@ -20,6 +22,7 @@ void inicializar_sistema_entrada(const char *nombre_archivo) {
     se.inicio = 0;
     se.delantero = 0;
     se.turno = 0; // Comenzamos leyendo desde el centinela A
+    se.excedido = 0;
     memset(se.centinelaA, 0, N); // Limpieza inicial de los centinelas
     memset(se.centinelaB, 0, N);
 
@@ -27,7 +30,8 @@ void inicializar_sistema_entrada(const char *nombre_archivo) {
     // Apertura del archivo fuente
     se.archivo = fopen(nombre_archivo, "r");
     if (!se.archivo) {
-        perror("Error al abrir el archivo");
+        //perror("Error al abrir el archivo");
+        errorArchivo(1);
         exit(EXIT_FAILURE);
     }
 
@@ -52,6 +56,13 @@ void cerrar_sistema_entrada() {
 char siguiente_caracter() {
     //printf("Delantero: [%d] | Inicio: [%d] | Turno: [%d] | centinelaA: [%s] | centinelaB: [%s] \n", se.delantero, se.inicio, se.turno, se.centinelaA, se.centinelaB);
     char caracter = '\0'; // Carácter a devolver
+
+    if(tamano_lexema()>(N-1)){
+        se.excedido=1;
+        //printf("EXCEDIDO\n");
+        //errorLexico(1,"test");
+        //avanzar_inicio();
+    }
 
     // Verificamos en qué centinela estamos y obtenemos el carácter actual
     if (se.turno == 0) { // Estamos en el centinela A
@@ -108,6 +119,7 @@ void devolver_caracter() {
     // Retrocedemos el puntero delantero una posición
     se.delantero--;
 
+
     // Si al retroceder estamos en la posición -1 del centinela A, necesitamos cambiar al centinela B
     // y ajustar el puntero delantero al final del centinela B (justo antes del EOF)
     if (se.delantero < 0 && se.turno == 0) {
@@ -126,7 +138,36 @@ void devolver_caracter() {
 // Función para devolver el lexema al analizador léxico
 char *devolver_lexema() {
     // Calculamos el tamaño del lexema
-    int tamano = tamano_lexema();
+    if(se.excedido){
+        //printf("parar");
+    }
+    int tamano;
+
+    if(se.excedido == 1){
+        tamano = N-1;
+        //se.inicio=tamano-N;
+        /*
+        if(inicio<N){
+            se.inicio=tamano-N;
+        }else{
+            se.inicio=tamano-N;
+        }
+         */
+
+        if(se.delantero<N){
+            // Se ha excedido y el deltantero está en A. El inicio se debe poner N-1 posiciones por detrás.
+            // Se coloca en la misma posición pero en el bloque contrario. Así te aseguras de que el tamaño sea N-1
+            // Quedará así: [ | | |delantero| | | |EOF]   [ | |inicio| | | | |EOF]  -> diferencia de N-1
+            se.inicio= se.delantero + (N-1);
+        }else{
+            // Quedará así: [ | |incio| | | | |EOF]   [ | | |delantero| | | |EOF]  -> diferencia de (N-1)
+            se.inicio= se.delantero - (N+1);
+
+        }
+    }else{
+        tamano = tamano_lexema();
+    }
+
 
     // Creamos un buffer para almacenar el lexema
     char *lexema = (char *)malloc((tamano+1) * sizeof(char));
@@ -169,6 +210,10 @@ char *devolver_lexema() {
     // Reiniciamos los punteros para el siguiente lexema
     se.inicio = se.delantero;
 
+    if(se.excedido){
+        errorLexico(1, lexema);
+        se.excedido=0;
+    }
     // Devolvemos el lexema
     return lexema;
 }
@@ -201,5 +246,6 @@ int tamano_lexema() {
 }
 
 void avanzar_inicio(){
+    //if((se.inicio)==N-2) se.inicio=N; //Si al avanzar se pone en el EOF del buffer A, se pasa al comienzo del buffer B
     se.inicio++;
 };

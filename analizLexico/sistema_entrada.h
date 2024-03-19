@@ -1,7 +1,7 @@
 #ifndef SISTEMA_ENTRADA_H
 #define SISTEMA_ENTRADA_H
 
-#define N 64 // Tamaño de cada centinela
+#define N 31 // Tamaño de cada centinela
 
 // Inicializa el sistema de entrada.
 void inicializar_sistema_entrada(const char *nombre_archivo);

@@ -40,42 +40,21 @@
 #define INTEGER 450
 #define FLOAT 451
 #define STRING 452
+#define IDENTIFICADOR 302
 
 
-
+//PALABRAS RESERVADAS
 #define IMPORT 300
 #define AS 301
-#define IDENTIFICADOR 302
 #define FOR 303
 #define IF 304
 #define WHILE 305
-#define LF 10
-#define NOTEQUAL 306
-#define DESCONOCIDO 9999
-#define False 307
-#define await 308
+#define DEF 306
+#define IN 307
+#define ELIF 308
 #define ELSE 309
-#define None 310
-#define BREAK 311
-#define EXCEPT 312
-#define IN 313
-#define PASS 314
-#define True 315
-#define CLASS 316
-#define FINALLY 317
-#define IS 318
-#define RETURN 319
-#define AND 320
-#define CONTINUE 321
-#define LAMBDA 322
-#define NOT 323
-#define TRY 324
-#define WHILE 305
-#define ASSERT 325
-#define DEL 326
-#define GLOBAL 327
-#define OR 328
-#define WITH 329
-#define YIELD 330
+#define RETURN 310
+#define NOT 311
+
 
 #endif // DEFINICIONES_H

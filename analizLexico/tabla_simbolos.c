@@ -19,7 +19,17 @@ void init_ts() {
     insertar_ts("for", FOR); // Suponiendo que IMPORT, AS, etc., son constantes definidas.
     insertar_ts("if", IF);
     insertar_ts("while", WHILE); // Suponiendo que IMPORT, AS, etc., son constantes definidas.
-    insertar_ts("!=", NOTEQUAL);
+    insertar_ts("def", DEF);
+    insertar_ts("in", IN);
+    insertar_ts("elif", ELIF);
+    insertar_ts("else", ELSE);
+    insertar_ts("return", RETURN);
+    insertar_ts("not", NOT);
+
+
+
+
+
 }
 
 
