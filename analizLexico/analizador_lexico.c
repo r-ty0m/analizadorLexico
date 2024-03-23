@@ -12,11 +12,11 @@
 #define ESTADO_LINEA_LOGICA 1
 #define ESTADO_COMENTARIO_MONOLINEA 2
 #define ESTADO_STRING_O_COMENTARIO_MULTILINEA 9
-#define ESTADO_DECLARACION_CODIFICACION 3
+//#define ESTADO_DECLARACION_CODIFICACION 3
 #define ESTADO_IDENTIFICADOR 4
 #define ESTADO_NUMERO 5
 #define ESTADO_OPERADOR_DELIMITADOR 6
-#define ESTADO_TOKEN_ESPECIAL 7
+//#define ESTADO_TOKEN_ESPECIAL 7
 #define ESTADO_PUNTO 8
 
 //ESTADOS DE SUBAUTOMATAS
@@ -39,11 +39,11 @@ int aceptado = 0;
 // Subautómatas iniciales
 void subautomata_linea_logica(comp_lexico *lex, char c);
 void subautomata_comentario();
-void subautomata_declaracion_codificacion(comp_lexico *lex, char c);
+//void subautomata_declaracion_codificacion(comp_lexico *lex, char c);
 void subautomata_identificador(comp_lexico *lex, char c);
 void subautomata_numeral(comp_lexico *lex, char c);
 void subautomata_operador_delimitador(comp_lexico *lex, char c);
-void subautomata_token_especial();
+//void subautomata_token_especial();
 void subautomata_punto(comp_lexico *lex,char c);
 void subautomata_string_o_comment(comp_lexico *lex, char c);
 
@@ -67,22 +67,7 @@ void aceptar(){
     aceptado = 1;
     estado = ESTADO_INICIAL;
 }
-/*
-void aceptar_asignar_desde_ts(comp_lexico *lex){
-    char *lex_devuelto = devolver_lexema();
-    lex->lexema = strdup(lex_devuelto);
-    lex->tipo_componente = buscar_ts(lex->lexema);
-    aceptar();
-    free(lex_devuelto);
-}
-void aceptar_asignar_lexema(comp_lexico *lex, int tipo) {
-    char *lex_devuelto = devolver_lexema();
-    lex->lexema = strdup(lex_devuelto);
-    lex->tipo_componente = tipo;
-    aceptar();
-    free(lex_devuelto);
-}
- */
+
 
 void aceptar_asignar_desde_ts(comp_lexico *lex){
     lex->lexema = devolver_lexema();
@@ -156,9 +141,6 @@ void sig_comp_lexico(comp_lexico *lex) {
                 break;
             case ESTADO_NUMERO:
                 subautomata_numeral(lex, c);
-                break;
-            case ESTADO_TOKEN_ESPECIAL:
-                subautomata_token_especial();
                 break;
             case ESTADO_STRING_O_COMENTARIO_MULTILINEA:
                 subautomata_string_o_comment(lex, c);
@@ -373,11 +355,13 @@ void subautomata_operador_delimitador(comp_lexico *lex, char c) {
     }
 }
 
+/*
 void subautomata_token_especial() {
     char c;
     // Implementar la lógica para procesar tokens especiales
     estado = ESTADO_INICIAL;
 }
+ */
 
 void subautomata_string_o_comment(comp_lexico *lex, char c){
 
@@ -389,6 +373,7 @@ void subautomata_string_o_comment(comp_lexico *lex, char c){
             //Se detectan tres "
             estado = ESTADO_COMENTARIO_MULTILINEA;
             free(devolver_lexema()); //Eliminamos el """ del buffer y liberamos memoria
+            printf(" AKI ");
         } else {
             // Es un string vacío
             devolver_caracter();

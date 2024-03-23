@@ -4,6 +4,8 @@
 #include <string.h> // Para usar memset
 #include "gestion_errores.h"
 
+int mallocCounter=0;
+
 // Estructura para manejar los centinelas y los punteros
 typedef struct {
     char centinelaA[N];
@@ -158,10 +160,10 @@ char *devolver_lexema() {
             // Se ha excedido y el deltantero está en A. El inicio se debe poner N-1 posiciones por detrás.
             // Se coloca en la misma posición pero en el bloque contrario. Así te aseguras de que el tamaño sea N-1
             // Quedará así: [ | | |delantero| | | |EOF]   [ | |inicio| | | | |EOF]  -> diferencia de N-1
-            se.inicio= se.delantero + (N-1);
+            se.inicio= se.delantero + (N);
         }else{
             // Quedará así: [ | |incio| | | | |EOF]   [ | | |delantero| | | |EOF]  -> diferencia de (N-1)
-            se.inicio= se.delantero - (N+1);
+            se.inicio= se.delantero - (N);
 
         }
     }else{
@@ -171,6 +173,7 @@ char *devolver_lexema() {
 
     // Creamos un buffer para almacenar el lexema
     char *lexema = (char *)malloc((tamano+1) * sizeof(char));
+    mallocCounter++;
 
     // Verificamos en qué centinela estamos y copiamos el lexema
     int pos_lexema = 0;
@@ -215,6 +218,7 @@ char *devolver_lexema() {
         se.excedido=0;
     }
     // Devolvemos el lexema
+    printf("[%d]",mallocCounter);
     return lexema;
 }
 
