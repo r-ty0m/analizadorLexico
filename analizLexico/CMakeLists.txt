@@ -13,4 +13,5 @@ add_executable(analizLexico main.c
         sistema_entrada_save_c
         sistema_entrada_save_h
         analiz_lexico_save_c
-        analiz_lexico_save_h)
+        analiz_lexico_save_h
+        analizador_sintactico_save)

@@ -11,28 +11,21 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    // Inicializa el sistema de entrada y carga el primer bloque del archivo fuente
-    inicializar_sistema_entrada(argv[1]);
 
-    // Inicializa la tabla de símbolos
-    init_ts();
-    // Imprime la tabla de símbolos para verificar su estado inicial (opcional)
-    imprimir_ts();
+    inicializar_sistema_entrada(argv[1]); // ---  Inicializa el sistema de entrada y carga el primer bloque del archivo fuente
+    init_ts(); // -------------------------------------------  Inicializa la tabla de símbolos
+    imprimir_ts(); // ---------------------------------------  Imprime la tabla de símbolos para verificar su estado inicial (opcional)
 
-    printf("\n########################################\n");
+    printf("\n\n################### ANÁLISIS #####################\n\n");
 
-    // Comienza el análisis sintáctico y léxico
-    analizar();
+    analizar(); // ------------------------------------------  Comienza el análisis sintáctico y léxico
 
-    printf("\n########################################\n");
+    printf("\n\n################### FIN DEL ANÁLISIS #####################\n\n");
 
-    // Imprime la tabla de símbolos para ver el estado final después del análisis
-    imprimir_ts();
-    // Libera recursos de la tabla de símbolos
-    free_ts();
+    imprimir_ts(); // ---------------------------------------  Imprime la tabla de símbolos para ver el estado final después del análisis
+    free_ts(); // -------------------------------------------  Libera recursos de la tabla de símbolos
+    cerrar_sistema_entrada(); // ----------------------------  Cierra el archivo y limpia recursos del sistema de entrada
 
-    // Cierra el archivo y limpia recursos del sistema de entrada
-    cerrar_sistema_entrada();
 
     return 0;
 }

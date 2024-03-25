@@ -14,11 +14,11 @@ void init_ts() {
     }
     crearAbb(&tablaSimbolos);
 
-    insertar_ts("import", IMPORT); // Suponiendo que IMPORT, AS, etc., son constantes definidas.
+    insertar_ts("import", IMPORT);
     insertar_ts("as", AS);
-    insertar_ts("for", FOR); // Suponiendo que IMPORT, AS, etc., son constantes definidas.
+    insertar_ts("for", FOR);
     insertar_ts("if", IF);
-    insertar_ts("while", WHILE); // Suponiendo que IMPORT, AS, etc., son constantes definidas.
+    insertar_ts("while", WHILE);
     insertar_ts("def", DEF);
     insertar_ts("in", IN);
     insertar_ts("elif", ELIF);
@@ -47,7 +47,9 @@ void _imprimirInorden(TABB nodo) {
 
     // Procesa el nodo actual
     leerElementoAbb(nodo, &elemento); // Obtiene la información del nodo actual
-    printf("Lexema: %s, Tipo Componente: %d\n", elemento.lexema, elemento.tipo_componente);
+    //printf("Lexema: %s, Tipo Componente: %d\n", elemento.lexema, elemento.tipo_componente);
+    printf("| %-30s | %30d |\n", elemento.lexema, elemento.tipo_componente);
+
 
     // Visita el subárbol derecho
     _imprimirInorden(derAbb(nodo));
@@ -55,8 +57,12 @@ void _imprimirInorden(TABB nodo) {
 
 // Implementación de imprimir_ts usando la función auxiliar
 void imprimir_ts() {
-    printf("Contenido de la Tabla de Símbolos:\n");
+
+    printf("|------------------------TABLA DE SÍMBOLOS------------------------|\n");
+    printf("| %-30s | %30s |\n", "LEX", "ID");
+    printf("|-----------------------------------------------------------------|\n");
     _imprimirInorden(tablaSimbolos); // Inicia el recorrido desde la raíz del árbol
+    printf("|-----------------------------------------------------------------|\n");
 }
 
 

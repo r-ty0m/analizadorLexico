@@ -104,7 +104,8 @@
 				7,
 				8,
 				9,
-				10
+				10,
+				11
 			]
 		}
 	],
@@ -170,6 +171,11 @@
 		{
 			"backtrace" : 1,
 			"path" : "analiz_lexico_save_h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "analizador_sintactico_save",
 			"sourceGroupIndex" : 1
 		}
 	],

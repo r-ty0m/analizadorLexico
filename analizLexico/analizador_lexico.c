@@ -6,8 +6,11 @@
 #include "analizador_lexico.h"
 #include "tabla_simbolos.h"
 #include "sistema_entrada.h"
+#include "gestion_errores.h"
 
-// Definiciones de los estados
+//----------------------------DEFINICIONES DE ESTADOS, VARIABLES Y FUNCIONES--------------------------------------------
+
+// ESTADOS PRIMARIOS
 #define ESTADO_INICIAL 0
 #define ESTADO_LINEA_LOGICA 1
 #define ESTADO_COMENTARIO_MONOLINEA 2
@@ -32,11 +35,12 @@
 #define ESTADO_COMENTARIO_MULTILINEA 16
 #define ESTADO_STRING 17
 
-// Variables globales
+// VARIABLES GLOBALES
 int estado = ESTADO_INICIAL;
 int aceptado = 0;
+int saltoLinea = 0; // El último caracter lanzado fue un /n
 
-// Subautómatas iniciales
+// SUBAUTÓMATAS INICIALES
 void subautomata_linea_logica(comp_lexico *lex, char c);
 void subautomata_comentario();
 //void subautomata_declaracion_codificacion(comp_lexico *lex, char c);
@@ -47,7 +51,7 @@ void subautomata_operador_delimitador(comp_lexico *lex, char c);
 void subautomata_punto(comp_lexico *lex,char c);
 void subautomata_string_o_comment(comp_lexico *lex, char c);
 
-//Subautómatas intermedios
+// SUBAUTÓMATAS INTERMEDIOS
 //NUMEROS
 void subautomata_numeral_entero(comp_lexico *lex, char c);
 void subautomata_numeral_hex(comp_lexico *lex, char c);
@@ -62,12 +66,13 @@ void subautomata_comentario_multilinea(comp_lexico *lex, char c);
 
 
 
-//Funciones auxiliares
+//--------------------------------------------Funciones auxiliares -----------------------------------------------------
+
 void aceptar(){
     aceptado = 1;
     estado = ESTADO_INICIAL;
+    if(saltoLinea) saltoLinea=0;
 }
-
 
 void aceptar_asignar_desde_ts(comp_lexico *lex){
     lex->lexema = devolver_lexema();
@@ -80,23 +85,38 @@ void aceptar_asignar_lexema(comp_lexico *lex, int tipo) {
     aceptar();
 }
 
+
+
+//-------------------------------------------- Sig Comp Lex ------------------------------------------------------------
+
+/* El funcionamiento de la función sig_comp_lexico() es la siguiente:
+ *
+ * Se solicita un nuevo caracter al sistema de entrada en el estado inicial.
+ *
+ * Dependiendo del caracter, se cambiará al estado correspondiente. En este nuevo estado se inicia el subautómata
+ * adecuado. Dicho subautómata podrá solicitar nuevos caracteres al sistema de entrada, y podrá hacer cambios de estado.
+ *
+ * Cada vez que se haga un cambio de estado se volverá a ejecutar el switch(estado) de dentro del while de la función
+ * sig_comp_léxico(). El subautómata correspondiente se iniciará en su estado. De esta manera no se harán saltos
+ * inrastreables entre subautómatas.
+*/
+
 void sig_comp_lexico(comp_lexico *lex) {
     char c;
     aceptado=0;
     estado = ESTADO_INICIAL;
+
     while(aceptado!=1) {
-        //c = siguiente_caracter();
         switch(estado) {
+
             case ESTADO_INICIAL:
                 c = siguiente_caracter();
                 if (c == '\n') {
                     estado = ESTADO_LINEA_LOGICA;
-                    //avanzar_inicio();
                 } else if (isalpha(c) || c == '_') {
                     estado = ESTADO_IDENTIFICADOR;
                 } else if (isdigit(c)) {
                     estado = ESTADO_NUMERO;
-                    //avanzar_inicio();
                 } else if (c == '"'){
                     estado = ESTADO_STRING_O_COMENTARIO_MULTILINEA;
                 }else if (c == 39){ // si c es '
@@ -104,20 +124,17 @@ void sig_comp_lexico(comp_lexico *lex) {
                 }else if (c == '#') {
                     estado = ESTADO_COMENTARIO_MONOLINEA;
                     avanzar_inicio();
-                } else if (strchr("+-*/=<>:{([])},", c) != NULL) { //TODO: Cambiar esto por algo más eficiente
+                } else if (strchr("+-*/=<>:{([])},", c) != NULL) { // Si c está en el string "+-*/=<>:{([])},"
                     estado = ESTADO_OPERADOR_DELIMITADOR;
-                    //avanzar_inicio();
                 } else if (c == ' ' || c == '\t') {
-                    //*char *temp = devolver_lexema();
-                    //free(temp);
                     avanzar_inicio();
                 }else if (c == '.') {
                     estado = ESTADO_PUNTO;
-                    //avanzar_inicio();
                 }else if(c == EOF) {
                     lex->tipo_componente = EOF;
                     aceptado=1;
                 }else{
+                    errorLexico(2,""); // Lexema mal formado. No se inicia ningún autómata.
                     avanzar_inicio();
                 }
                 break;
@@ -178,50 +195,55 @@ void sig_comp_lexico(comp_lexico *lex) {
     }
 }
 
-// #####################################################
-//        IMPLEMENTACIÓN SUBAUTÓMATAS INICIALES
-// #####################################################
+//----------------------------------- Implementación Subautómatas Iniciales --------------------------------------------
 
 void subautomata_punto(comp_lexico *lex, char c){
     c = siguiente_caracter();
     if (isdigit(c)) { // Es un número, posiblemente un literal flotante
         estado = ESTADO_NUMERO_FLOAT;
     } else { // No es un número, aceptamos el punto como token por sí mismo.
-        devolver_caracter(); // Devolvemos el carácter no numérico al flujo
+        devolver_caracter(); // Devolvemos el carácter para que sea analizado en el siguiente lexema
         aceptar_asignar_lexema(lex, OP_PUNTO);
     }
 }
 
-void subautomata_linea_logica(comp_lexico *lex, char c){
-    aceptar_asignar_lexema(lex, LF);
+void subautomata_linea_logica(comp_lexico *lex, char c){ // \n
+    if(!saltoLinea){ // Si el último lexema no ha sido un /n, se devolverá el lexema
+        aceptar_asignar_lexema(lex, LF);
+        saltoLinea=1;
+    }else{ // Si ya se ha devuelto un /n, se descarta el lexema.
+        descartar_lexema();
+        estado = ESTADO_INICIAL;
+    }
 }
 
-void subautomata_comentario() {
+void subautomata_comentario() { //se consumirán caracteres hasta encontrar un /n o un EOF
     char c;
     do {
         c = siguiente_caracter();
-        avanzar_inicio();
+        avanzar_inicio(); // Al avanzar el inicio se "elimina" ese caracter del lexema en el sistema de entrada
+                          // Esto se puede hacer también con la función descartar_lexema(), pero así tiene más sentido.
     } while(c != '\n' && c != EOF);
     if(c == '\n'){
         estado = ESTADO_LINEA_LOGICA;
     }else{
+        devolver_caracter();
         estado = ESTADO_INICIAL;
     }
 
 }
 
 void subautomata_identificador(comp_lexico *lex, char c) {
-
     c = siguiente_caracter();
     if (!isalnum(c) && c != '_') {
         devolver_caracter();
-        aceptar_asignar_desde_ts(lex);
+        aceptar_asignar_desde_ts(lex); // Se devuelve el lexema empleando la tabla de símbolos
     }
 }
 
 void subautomata_numeral(comp_lexico *lex, char c) {
     c = siguiente_caracter();
-    if (isdigit(c)) {
+    if (isdigit(c)) { // Redireccionamiento a otros estados
         estado = ESTADO_NUMERO_ENTERO;
     }else if (c == '.'){
         estado = ESTADO_NUMERO_FLOAT;
@@ -231,12 +253,11 @@ void subautomata_numeral(comp_lexico *lex, char c) {
         estado = ESTADO_NUMERO_HEX;
     }else{
         devolver_caracter();
-        aceptar_asignar_lexema(lex, INTEGER);
+        aceptar_asignar_lexema(lex, INTEGER); // Si el siguiente caracter no lleva a otro estado es entero
     }
 }
 
 void subautomata_operador_delimitador(comp_lexico *lex, char c) {
-    //char c = siguiente_caracter(); // Suponemos que ya tenemos el primer carácter del operador/delimitador.
     char siguiente;
 
     switch (c) {
@@ -266,7 +287,6 @@ void subautomata_operador_delimitador(comp_lexico *lex, char c) {
                 aceptar_asignar_lexema(lex, OP_MULTI_ASIGNACION);
             } else if (siguiente == '*') {
                 aceptar_asignar_lexema(lex, OP_POTENCIA);
-                //TODO: Implementar cambio de estado a ** (en wilcoxon no ocurre, implementar solo si es necesario)
             } else {
                 devolver_caracter();
                 aceptar_asignar_lexema(lex, OP_MULTIPLICACION);
@@ -276,9 +296,6 @@ void subautomata_operador_delimitador(comp_lexico *lex, char c) {
             siguiente = siguiente_caracter();
             if (siguiente == '=') {
                 aceptar_asignar_lexema(lex, OP_DIV_ASIGNACION);
-            }else if (siguiente == '/') {
-                //aceptar_asignar_lexema(lex, "**", OP_POTENCIA);
-                //TODO: Implementar cambio de estado a // en wilcoxon no ocurre, implementar solo si es necesario)
             } else {
                 devolver_caracter();
                 aceptar_asignar_lexema(lex, OP_DIVISION);
@@ -297,9 +314,6 @@ void subautomata_operador_delimitador(comp_lexico *lex, char c) {
             siguiente = siguiente_caracter();
             if (siguiente == '=') {
                 aceptar_asignar_lexema(lex, OP_MENOR_EQUAL);
-            }else if (siguiente == '<') {
-                //aceptar_asignar_lexema(lex, "**", OP_POTENCIA);
-                //TODO: Implementar cambio de estado a << en wilcoxon no ocurre, implementar solo si es necesario)
             } else {
                 devolver_caracter();
                 aceptar_asignar_lexema(lex, OP_MENOR);
@@ -309,9 +323,6 @@ void subautomata_operador_delimitador(comp_lexico *lex, char c) {
             siguiente = siguiente_caracter();
             if (siguiente == '=') {
                 aceptar_asignar_lexema(lex, OP_MAYOR_EQUAL);
-            }else if (siguiente == '/') {
-                //aceptar_asignar_lexema(lex, "**", OP_POTENCIA);
-                //TODO: Implementar cambio de estado a // en wilcoxon no ocurre, implementar solo si es necesario)
             } else {
                 devolver_caracter();
                 aceptar_asignar_lexema(lex, OP_MAYOR);
@@ -355,14 +366,6 @@ void subautomata_operador_delimitador(comp_lexico *lex, char c) {
     }
 }
 
-/*
-void subautomata_token_especial() {
-    char c;
-    // Implementar la lógica para procesar tokens especiales
-    estado = ESTADO_INICIAL;
-}
- */
-
 void subautomata_string_o_comment(comp_lexico *lex, char c){
 
     c = siguiente_caracter();
@@ -372,25 +375,23 @@ void subautomata_string_o_comment(comp_lexico *lex, char c){
         if (c == '"') {
             //Se detectan tres "
             estado = ESTADO_COMENTARIO_MULTILINEA;
-            free(devolver_lexema()); //Eliminamos el """ del buffer y liberamos memoria
-            printf(" AKI ");
-        } else {
-            // Es un string vacío
+            descartar_lexema(); // Se descarta el inicio del comentario ["""] , pues no se devolverá como lexema
+
+        } else { // Es un string vacío
             devolver_caracter();
             aceptar_asignar_lexema(lex, STRING);
         }
+
     } else {
         // Es un string regular o el inicio de un string.
-        //devolver_caracter();
         estado = ESTADO_STRING;
     }
 
 
 }
 
-// #####################################################
-//        IMPLEMENTACIÓN SUBAUTÓMATAS INTERMEDIOS
-// #####################################################
+//--------------------------------- Implementación Subautómatas Intermedios --------------------------------------------
+
 
 //SUBAUTÓMATAS NUMERALES
 void subautomata_numeral_entero(comp_lexico *lex, char c){
@@ -426,7 +427,7 @@ void subautomata_numeral_elevado(comp_lexico *lex, char c){
     }else if (c == '-'){
         estado = ESTADO_NUMERO_ELEVADO_NEGATIVO;
     }else{
-        //TODO: LANZAR ERROR FLOTANTE ELEVADO MAL FORMADO
+        errorLexico(2,"");
     }
 }
 
@@ -448,12 +449,12 @@ void subautomata_numeral_elevado_negativo(comp_lexico *lex, char c){
 
 //SUBAUTÓMATAS COMENTARIOS
 void subautomata_string(comp_lexico *lex, char c){
-    if(c == 39){
+    if(c == 39){ // String entre comillas simples ['string']
         c = siguiente_caracter();
         if (c == 39) {
             aceptar_asignar_lexema(lex, STRING);
         }
-    }else{
+    }else{ // String entre comillas dobles ["string"]
         c = siguiente_caracter();
         if (c == '"') {
             aceptar_asignar_lexema(lex, STRING);
@@ -463,6 +464,8 @@ void subautomata_string(comp_lexico *lex, char c){
 }
 
 void subautomata_comentario_multilinea(comp_lexico *lex, char c){
+
+    // Se consumen caracteres hasta que se encuentren tres " seguidas o un EOF
 
     c = siguiente_caracter();
     avanzar_inicio();
@@ -477,7 +480,16 @@ void subautomata_comentario_multilinea(comp_lexico *lex, char c){
             if (c == '"') {
                 //Se detectan tres "
                 estado = ESTADO_INICIAL;
+            }else if (c == EOF){
+                devolver_caracter();
+                estado = ESTADO_INICIAL;
             }
+        }else if (c == EOF){
+            devolver_caracter();
+            estado = ESTADO_INICIAL;
         }
+    }else if (c == EOF){
+        devolver_caracter();
+        estado = ESTADO_INICIAL;
     }
 }
